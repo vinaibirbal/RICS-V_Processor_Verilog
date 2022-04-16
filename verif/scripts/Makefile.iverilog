@@ -1,0 +1,43 @@
+SRCLIST = $(shell cat $(CL_ROOT)/verif/scripts/design.f)
+SRC = $(addprefix $(CL_ROOT)/design/code/, $(SRCLIST)) $(CL_ROOT)/verif/tests/clockgen.v $(CL_ROOT)/design/design_wrapper.v 
+# IVFLAGS = -g2012 -gassertions
+IVFLAGS = -g2005
+TOP = top
+
+ifeq ($(VCD), 1)
+IVFLAGS+= -DVCD
+endif
+
+# Normal tests, not c tests
+$(SIM_DIR)/$(TOP): $(SRC) $(CL_ROOT)/verif/tests/tracegen.v Makefile.iverilog
+	rm -f $(SIM_DIR)/$(TOP)
+	echo IVerilog Compilation
+	mkdir -p $(SIM_DIR)
+	cd $(SIM_DIR) && iverilog $(IVFLAGS) \
+		-Wall  \
+		-D IVERILOG \
+		-D MEM_PATH=$(MEM_PATH_STR) \
+		-D TEST_VECTOR=$(TEST_VECTOR_STR) \
+		-D MEM_DEPTH=$(MEM_DEPTH) \
+		-D GEN_TRACE=$(GEN_TRACE) \
+		-D TRACE_FILE=$(TRACE_FILE_STR)\
+		-D LINE_COUNT=$(LINE_COUNT) \
+		-D VCD_FILE=$(VCD_FILE_STR) \
+		-D PATTERN_FILE=$(PATTERN_FILE_STR) \
+		-D PATTERN_LINE_COUNT=$(PATTERN_LINE_COUNT) \
+		-D PATTERN_DUMP_FILE=$(PATTERN_DUMP_FILE_STR) \
+		-D PATTERN_DUMP=$(PATTERN_DUMP) \
+		-D PATTERN_CHECK=$(PATTERN_CHECK) \
+		-D TIMEOUT=$(TIMEOUT) \
+		-I $(CL_ROOT)/design \
+		-I $(CL_ROOT)/verif/tests \
+		-o $(TOP) \
+		-s $(TOP) $(SRC) $(TEST_NAME).v $(WARN_OUTPUT)
+	$(WARN_CHECK)
+
+run: $(SIM_DIR)/$(TOP)
+	echo IVerilog Run
+	cd $(SIM_DIR) && vvp $(TOP) | bash $(CL_ROOT)/verif/scripts/check_fatal.sh
+
+clean:
+	rm -rf $(SIM_DIR)

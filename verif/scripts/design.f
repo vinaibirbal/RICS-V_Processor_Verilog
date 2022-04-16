@@ -1,0 +1,9 @@
+alu.v
+cu.v
+decode_memory.v
+dmemory.v
+imemory.v
+register_file.v
+pd.v
+pipeline_regs.v
+f_cu.v
